@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lingua Matrix">
+<meta name="theme-color" content="#0d0d1a">
+<title>Lingua Matrix</title>
+<style>
+:root {
+  --bg:#0d0d1a; --surface:#16162a; --surface2:#1e1e35; --border:rgba(255,255,255,0.08);
+  --it:#2d6a4f; --it-acc:#52b788; --fr:#1d3557; --fr-acc:#6baed6; --es:#7b1d1d; --es-acc:#f87171;
+  --gold:#f4c542; --coral:#e07a5f; --mint:#52b788;
+  --text:#f0f0f0; --muted:#888; --radius:14px; --rsm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;display:flex;flex-direction:column;}
+
+#header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 14px 8px;flex-shrink:0;}
+#app-title{font-size:10px;letter-spacing:3px;color:var(--mint);text-transform:uppercase;font-weight:800;margin-bottom:10px;}
+#pair-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:10px;padding-bottom:2px;}
+#pair-tabs::-webkit-scrollbar{display:none;}
+.pair-tab{flex-shrink:0;padding:6px 16px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all .15s;white-space:nowrap;}
+.pair-tab.active{border-color:var(--mint);color:var(--mint);background:rgba(82,183,136,0.1);}
+#controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+#dir-toggle{display:flex;align-items:center;gap:7px;background:var(--surface2);border-radius:20px;padding:6px 14px;cursor:pointer;border:1.5px solid var(--border);transition:all .15s;flex-shrink:0;}
+#dir-toggle:active{opacity:.7;}
+#dir-label{font-size:13px;font-weight:800;color:var(--text);letter-spacing:.5px;}
+#dir-icon{font-size:16px;color:var(--gold);transition:transform .3s;}
+#dir-icon.flipped{transform:scaleX(-1);}
+.mode-pills{display:flex;background:var(--surface2);border-radius:20px;overflow:hidden;border:1.5px solid var(--border);}
+.mode-pill{padding:6px 14px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all .15s;}
+.mode-pill.active{background:var(--coral);color:#fff;border-radius:20px;}
+
+#secbar{display:flex;gap:6px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+#secbar::-webkit-scrollbar{display:none;}
+.sec-pill{flex-shrink:0;padding:5px 14px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all .15s;}
+.sec-pill.active{border-color:var(--fr-acc);color:var(--fr-acc);background:rgba(107,174,214,0.1);}
+
+#scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;}
+#scroll::-webkit-scrollbar{width:3px;}
+#scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+.lang-badges{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.lang-badge{border-radius:10px;padding:7px 18px;font-size:13px;font-weight:800;letter-spacing:1px;}
+.sec-lbl{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;}
+
+.tense-block{margin-bottom:24px;}
+.tense-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;font-family:Georgia,serif;}
+.tgrid{display:grid;gap:8px;margin-bottom:6px;}
+.tgrid.c2{grid-template-columns:1fr 1fr;}
+.tgrid.c3{grid-template-columns:1fr 1fr 1fr;}
+.lcol{border-radius:var(--rsm);overflow:hidden;}
+.lhdr{padding:6px 10px;font-size:10px;font-weight:800;letter-spacing:1.5px;color:#fff;text-transform:uppercase;}
+.lrow{padding:5px 10px;font-size:12px;color:#e8f4f8;font-family:Georgia,serif;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;gap:5px;}
+.lrow:last-child{border-bottom:none;}
+.subj{opacity:.4;font-size:10px;min-width:22px;flex-shrink:0;padding-top:1px;}
+.tnote{background:rgba(82,183,136,0.08);border-left:3px solid var(--mint);border-radius:0 6px 6px 0;padding:7px 10px;font-size:11px;color:#a8d5b5;font-style:italic;}
+
+.mblock{margin-bottom:12px;background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
+.mhdr{background:var(--surface2);padding:8px 12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.mcat{color:var(--muted);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
+.mbadge{border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;font-family:monospace;}
+.mrow{display:grid;padding:6px 12px;border-bottom:1px solid var(--border);}
+.mrow:last-child{border-bottom:none;}
+.mrow.c2{grid-template-columns:1fr 1fr;}
+.mrow.c3{grid-template-columns:1fr 1fr 1fr;}
+.mword{font-family:Georgia,serif;font-size:13px;}
+
+.ggroup{margin-bottom:24px;}
+.gtitle{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:10px;}
+.gcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.gcname{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;font-family:Georgia,serif;}
+.gcbody{font-size:12px;color:#bbb;line-height:1.6;margin-bottom:10px;}
+.gexs{display:flex;flex-direction:column;gap:6px;}
+.gex{background:var(--surface2);border-radius:var(--rsm);padding:8px 12px;}
+.gexlang{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:800;margin-bottom:3px;}
+.gextext{font-family:Georgia,serif;font-size:13px;color:var(--text);}
+.gextrans{font-size:11px;color:var(--muted);margin-top:2px;font-style:italic;}
+.gnote{margin-top:8px;font-size:11px;color:var(--mint);font-style:italic;}
+
+#fcwrap{display:flex;flex-direction:column;gap:10px;}
+#fcgroups{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+#fcgroups::-webkit-scrollbar{display:none;}
+.fcgpill{flex-shrink:0;padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;transition:all .15s;}
+.fcgpill.active{border-color:var(--gold);color:var(--gold);background:rgba(244,197,66,0.1);}
+#fccounter{text-align:center;font-size:11px;color:var(--muted);letter-spacing:1px;}
+#fccard{min-height:210px;border-radius:20px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px 22px;cursor:pointer;background:var(--surface);border:2px solid var(--border);transition:background .2s,border-color .2s,transform .1s;box-shadow:0 8px 32px rgba(0,0,0,0.4);user-select:none;}
+#fccard:active{transform:scale(0.98);}
+#fccard.on{background:var(--surface2);border-color:var(--mint);}
+#fctype{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+#fccard.on #fctype{color:var(--mint);}
+#fcq{font-family:Georgia,serif;font-size:20px;color:var(--text);line-height:1.4;}
+#fca{font-family:Georgia,serif;font-size:20px;color:var(--text);line-height:1.4;display:none;}
+#fccard.on #fcq{display:none;}
+#fccard.on #fca{display:block;}
+#fchint{margin-top:16px;font-size:11px;color:rgba(255,255,255,0.2);}
+#fccard.on #fchint{display:none;}
+#fcnote{margin-top:12px;font-size:11px;color:var(--muted);font-style:italic;display:none;max-width:280px;}
+#fccard.on #fcnote{display:block;}
+#fcbtns{display:flex;gap:10px;justify-content:center;}
+.fcbtn{padding:12px 28px;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;border:none;transition:all .15s;}
+.fcbtn:active{transform:scale(0.96);}
+#fcprev{background:var(--surface2);color:var(--muted);border:1.5px solid var(--border);}
+#fcnext{background:var(--mint);color:#0d1a12;}
+
+@media(max-width:380px){.tgrid.c3{grid-template-columns:1fr;}.mrow.c3{grid-template-columns:1fr 1fr;}#fcq,#fca{font-size:17px;}}
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="app-title">✦ Lingua Matrix</div>
+  <div id="pair-tabs"></div>
+  <div id="controls">
+    <div id="dir-toggle" onclick="flipDir()">
+      <span id="dir-label"></span>
+      <span id="dir-icon">⇄</span>
+    </div>
+    <div class="mode-pills">
+      <button class="mode-pill" id="mp-reference" onclick="setMode('reference')">📖 Reference</button>
+      <button class="mode-pill" id="mp-flashcard" onclick="setMode('flashcard')">🃏 Cards</button>
+    </div>
+  </div>
+</div>
+<div id="secbar"></div>
+<div id="scroll"></div>
+
+<script>
+const LANG={IT:"Italiano",FR:"Français",ES:"Español"};
+const COL={IT:"#2d6a4f",FR:"#1d3557",ES:"#7b1d1d"};
+const ACC={IT:"#52b788",FR:"#6baed6",ES:"#f87171"};
+const SUBJ={IT:["io","tu","lui","noi","voi","loro"],FR:["je","tu","il","ns","vs","ils"],ES:["yo","tú","él","ns","vs","ell"]};
+const PAIRS=[{id:"IT-FR",a:"IT",b:"FR"},{id:"IT-ES",a:"IT",b:"ES"},{id:"FR-ES",a:"FR",b:"ES"},{id:"ALL",a:"ALL",b:"ALL"}];
+
+let S={pair:0,flip:false,mode:"reference",sec:"conjugation",fcg:0,fci:0,fcr:false};
+
+function pk(){const p=PAIRS[S.pair];return p.id==="ALL"?"ALL":S.flip?`${p.b}-${p.a}`:p.id;}
+function pl(){const p=PAIRS[S.pair];if(p.id==="ALL")return["IT","FR","ES"];return S.flip?[p.b,p.a]:[p.a,p.b];}
+
+const CONJ={
+"IT-FR":[
+  {name:"Present",IT:{l:"Presente",r:["io parlo","tu parli","lui/lei parla","noi parliamo","voi parlate","loro parlano"]},FR:{l:"Présent",r:["je parle","tu parles","il/elle parle","nous parlons","vous parlez","ils parlent"]},note:"-are/-er: roots match, endings diverge at 1st plural."},
+  {name:"Imperfect",IT:{l:"Imperfetto",r:["io parlavo","tu parlavi","lui parlava","noi parlavamo","voi parlavate","loro parlavano"]},FR:{l:"Imparfait",r:["je parlais","tu parlais","il parlait","nous parlions","vous parliez","ils parlaient"]},note:"Both extend stem with -av-/-ais-. Easiest parallel tense."},
+  {name:"Future",IT:{l:"Futuro",r:["io parlerò","tu parlerai","lui parlerà","noi parleremo","voi parlerete","loro parleranno"]},FR:{l:"Futur",r:["je parlerai","tu parleras","il parlera","nous parlerons","vous parlerez","ils parleront"]},note:"Almost identical — both infinitive + endings."},
+  {name:"Conditional",IT:{l:"Condizionale",r:["io parlerei","tu parleresti","lui parlerebbe","noi parleremmo","voi parlereste","loro parlerebbero"]},FR:{l:"Conditionnel",r:["je parlerais","tu parlerais","il parlerait","nous parlerions","vous parleriez","ils parleraient"]},note:"Future stem + imperfect endings. Parallel logic."},
+  {name:"Passato Prossimo / Passé Composé",IT:{l:"Pass. Prossimo",r:["ho parlato","hai parlato","ha parlato","abbiamo parlato","avete parlato","hanno parlato"]},FR:{l:"Passé Composé",r:["j'ai parlé","tu as parlé","il a parlé","nous avons parlé","vous avez parlé","ils ont parlé"]},note:"Both avere/avoir + past participle. IT -ato, FR -é."},
+  {name:"Passato Remoto / Passé Simple",IT:{l:"Passato Remoto",r:["io parlai","tu parlasti","lui parlò","noi parlammo","voi parlaste","loro parlarono"]},FR:{l:"Passé Simple (literary)",r:["je parlai","tu parlas","il parla","nous parlâmes","vous parlâtes","ils parlèrent"]},note:"IT used in writing & south Italy. FR extinct in speech."},
+  {name:"Subjunctive Present",IT:{l:"Cong. Presente",r:["io parli","tu parli","lui parli","noi parliamo","voi parliate","loro parlino"]},FR:{l:"Subjonctif",r:["que je parle","que tu parles","qu'il parle","que nous parlions","que vous parliez","qu'ils parlent"]},note:"IT flips -are→-i. FR requires 'que'."},
+  {name:"Subjunctive Imperfect",IT:{l:"Cong. Imperfetto",r:["io parlassi","tu parlassi","lui parlasse","noi parlassimo","voi parlaste","loro parlassero"]},FR:{l:"Subj. Imparfait (literary)",r:["que je parlasse","que tu parlasses","qu'il parlât","que nous parlassions","que vous parlassiez","qu'ils parlassent"]},note:"IT actively used! FR subj. imperfect is extinct in modern speech."},
+  {name:"Conditional Perfect",IT:{l:"Cond. Passato",r:["avrei parlato","avresti parlato","avrebbe parlato","avremmo parlato","avreste parlato","avrebbero parlato"]},FR:{l:"Conditionnel Passé",r:["j'aurais parlé","tu aurais parlé","il aurait parlé","nous aurions parlé","vous auriez parlé","ils auraient parlé"]},note:"Both for regret/unrealized hypotheticals. IT avrebbe+ato, FR aurait+é."},
+],
+"IT-ES":[
+  {name:"Present",IT:{l:"Presente",r:["io parlo","tu parli","lui/lei parla","noi parliamo","voi parlate","loro parlano"]},ES:{l:"Presente",r:["yo hablo","tú hablas","él/ella habla","nosotros hablamos","vosotros habláis","ellos hablan"]},note:"Nearly identical! Closest present tense pair of all three languages."},
+  {name:"Imperfect",IT:{l:"Imperfetto",r:["io parlavo","tu parlavi","lui parlava","noi parlavamo","voi parlavate","loro parlavano"]},ES:{l:"Imperfecto",r:["yo hablaba","tú hablabas","él hablaba","nosotros hablábamos","vosotros hablabais","ellos hablaban"]},note:"IT -avo/-avi, ES -aba/-abas. Both use -ab- stem. Nearly parallel."},
+  {name:"Future",IT:{l:"Futuro",r:["io parlerò","tu parlerai","lui parlerà","noi parleremo","voi parlerete","loro parleranno"]},ES:{l:"Futuro",r:["yo hablaré","tú hablarás","él hablará","nosotros hablaremos","vosotros hablaréis","ellos hablarán"]},note:"Both infinitive + endings. Endings near identical."},
+  {name:"Conditional",IT:{l:"Condizionale",r:["io parlerei","tu parleresti","lui parlerebbe","noi parleremmo","voi parlereste","loro parlerebbero"]},ES:{l:"Condicional",r:["yo hablaría","tú hablarías","él hablaría","nosotros hablaríamos","vosotros hablaríais","ellos hablarían"]},note:"IT -ei/-esti/-ebbe, ES -ía/-ías/-ía. Same logic, different vowel."},
+  {name:"Compound Past",IT:{l:"Pass. Prossimo",r:["ho parlato","hai parlato","ha parlato","abbiamo parlato","avete parlato","hanno parlato"]},ES:{l:"Pretérito Perfecto",r:["he hablado","has hablado","ha hablado","hemos hablado","habéis hablado","han hablado"]},note:"Both avere/haber + participle. IT -ato, ES -ado. Very parallel."},
+  {name:"Simple Past",IT:{l:"Passato Remoto",r:["io parlai","tu parlasti","lui parlò","noi parlammo","voi parlaste","loro parlarono"]},ES:{l:"Pretérito Indefinido",r:["yo hablé","tú hablaste","él habló","nosotros hablamos","vosotros hablasteis","ellos hablaron"]},note:"IT literary in north; ES active everyday speech. Key difference!"},
+  {name:"Subjunctive Present",IT:{l:"Cong. Presente",r:["io parli","tu parli","lui parli","noi parliamo","voi parliate","loro parlino"]},ES:{l:"Subj. Presente",r:["yo hable","tú hables","él hable","nosotros hablemos","vosotros habléis","ellos hablen"]},note:"IT flips -are→-i, ES flips -ar→-e. Opposite vowel swap!"},
+  {name:"Subjunctive Imperfect",IT:{l:"Cong. Imperfetto",r:["io parlassi","tu parlassi","lui parlasse","noi parlassimo","voi parlaste","loro parlassero"]},ES:{l:"Subj. Imperfecto",r:["yo hablara","tú hablaras","él hablara","nosotros habláramos","vosotros hablarais","ellos hablaran"]},note:"ES also has -se form. IT doubles -ss-; ES uses -r-. Both actively used!"},
+  {name:"Conditional Perfect",IT:{l:"Cond. Passato",r:["avrei parlato","avresti parlato","avrebbe parlato","avremmo parlato","avreste parlato","avrebbero parlato"]},ES:{l:"Condicional Compuesto",r:["habría hablado","habrías hablado","habría hablado","habríamos hablado","habríais hablado","habrían hablado"]},note:"IT avrebbe+ato, ES habría+ado. Used identically for counterfactuals."},
+],
+"FR-ES":[
+  {name:"Present",FR:{l:"Présent",r:["je parle","tu parles","il/elle parle","nous parlons","vous parlez","ils parlent"]},ES:{l:"Presente",r:["yo hablo","tú hablas","él/ella habla","nosotros hablamos","vosotros habláis","ellos hablan"]},note:"ES keeps open -a vowel; FR drops final vowels."},
+  {name:"Imperfect",FR:{l:"Imparfait",r:["je parlais","tu parlais","il parlait","nous parlions","vous parliez","ils parlaient"]},ES:{l:"Imperfecto",r:["yo hablaba","tú hablabas","él hablaba","nosotros hablábamos","vosotros hablabais","ellos hablaban"]},note:"FR -ais/-ait vs ES -aba. Both mark ongoing past action."},
+  {name:"Future",FR:{l:"Futur",r:["je parlerai","tu parleras","il parlera","nous parlerons","vous parlerez","ils parleront"]},ES:{l:"Futuro",r:["yo hablaré","tú hablarás","él hablará","nosotros hablaremos","vosotros hablaréis","ellos hablarán"]},note:"Both infinitive + endings. Identical logic."},
+  {name:"Conditional",FR:{l:"Conditionnel",r:["je parlerais","tu parlerais","il parlerait","nous parlerions","vous parleriez","ils parleraient"]},ES:{l:"Condicional",r:["yo hablaría","tú hablarías","él hablaría","nosotros hablaríamos","vosotros hablaríais","ellos hablarían"]},note:"FR -ais, ES -ía. Both = future stem + imperfect endings."},
+  {name:"Compound Past",FR:{l:"Passé Composé",r:["j'ai parlé","tu as parlé","il a parlé","nous avons parlé","vous avez parlé","ils ont parlé"]},ES:{l:"Pretérito Perfecto",r:["he hablado","has hablado","ha hablado","hemos hablado","habéis hablado","han hablado"]},note:"FR avoir+parlé, ES haber+hablado. Both compound past."},
+  {name:"Simple Past",FR:{l:"Passé Simple (literary)",r:["je parlai","tu parlas","il parla","nous parlâmes","vous parlâtes","ils parlèrent"]},ES:{l:"Pretérito Indefinido",r:["yo hablé","tú hablaste","él habló","nosotros hablamos","vosotros hablasteis","ellos hablaron"]},note:"FR literary only; ES everyday speech. Major practical difference."},
+  {name:"Subjunctive",FR:{l:"Subjonctif",r:["que je parle","que tu parles","qu'il parle","que nous parlions","que vous parliez","qu'ils parlent"]},ES:{l:"Subj. Presente",r:["yo hable","tú hables","él hable","nosotros hablemos","vosotros habléis","ellos hablen"]},note:"FR needs 'que'; ES doesn't. FR looks like indicative; ES flips vowel."},
+  {name:"Conditional Perfect",FR:{l:"Cond. Passé",r:["j'aurais parlé","tu aurais parlé","il aurait parlé","nous aurions parlé","vous auriez parlé","ils auraient parlé"]},ES:{l:"Condicional Compuesto",r:["habría hablado","habrías hablado","habría hablado","habríamos hablado","habríais hablado","habrían hablado"]},note:"Both for unrealized hypotheticals. FR avoir, ES haber."},
+],
+"ALL":[
+  {name:"Present",IT:{l:"IT Presente",r:["io parlo","tu parli","lui parla","noi parliamo","voi parlate","loro parlano"]},FR:{l:"FR Présent",r:["je parle","tu parles","il parle","nous parlons","vous parlez","ils parlent"]},ES:{l:"ES Presente",r:["yo hablo","tú hablas","él habla","nosotros hablamos","vosotros habláis","ellos hablan"]},note:"IT/ES keep open vowels. FR drops them. IT≈ES at every person."},
+  {name:"Imperfect",IT:{l:"IT Imperfetto",r:["io parlavo","tu parlavi","lui parlava","noi parlavamo","voi parlavate","loro parlavano"]},FR:{l:"FR Imparfait",r:["je parlais","tu parlais","il parlait","nous parlions","vous parliez","ils parlaient"]},ES:{l:"ES Imperfecto",r:["yo hablaba","tú hablabas","él hablaba","nosotros hablábamos","vosotros hablabais","ellos hablaban"]},note:"IT -avo, ES -aba, FR -ais. IT/ES most similar."},
+  {name:"Future",IT:{l:"IT Futuro",r:["io parlerò","tu parlerai","lui parlerà","noi parleremo","voi parlerete","loro parleranno"]},FR:{l:"FR Futur",r:["je parlerai","tu parleras","il parlera","nous parlerons","vous parlerez","ils parleront"]},ES:{l:"ES Futuro",r:["yo hablaré","tú hablarás","él hablará","nosotros hablaremos","vosotros hablaréis","ellos hablarán"]},note:"All 3 use infinitive + endings. FR/IT endings nearly identical."},
+  {name:"Conditional",IT:{l:"IT Condizionale",r:["io parlerei","tu parleresti","lui parlerebbe","noi parleremmo","voi parlereste","loro parlerebbero"]},FR:{l:"FR Conditionnel",r:["je parlerais","tu parlerais","il parlerait","nous parlerions","vous parleriez","ils parleraient"]},ES:{l:"ES Condicional",r:["yo hablaría","tú hablarías","él hablaría","nosotros hablaríamos","vosotros hablaríais","ellos hablarían"]},note:"IT -ei, FR -ais, ES -ía. All = future stem + imperfect endings."},
+  {name:"Compound Past",IT:{l:"IT Pass. Prossimo",r:["ho parlato","hai parlato","ha parlato","abbiamo parlato","avete parlato","hanno parlato"]},FR:{l:"FR Passé Composé",r:["j'ai parlé","tu as parlé","il a parlé","nous avons parlé","vous avez parlé","ils ont parlé"]},ES:{l:"ES Pretérito Perf.",r:["he hablado","has hablado","ha hablado","hemos hablado","habéis hablado","han hablado"]},note:"All 3: have+participle. IT -ato, FR -é, ES -ado."},
+  {name:"Subjunctive Present",IT:{l:"IT Congiuntivo",r:["io parli","tu parli","lui parli","noi parliamo","voi parliate","loro parlino"]},FR:{l:"FR Subjonctif",r:["je parle","tu parles","il parle","nous parlions","vous parliez","ils parlent"]},ES:{l:"ES Subjuntivo",r:["yo hable","tú hables","él hable","nosotros hablemos","vosotros habléis","ellos hablen"]},note:"IT→-i, ES→-e, FR looks like indicative. Key divergence."},
+  {name:"Conditional Perfect",IT:{l:"IT Cond. Passato",r:["avrei parlato","avresti parlato","avrebbe parlato","avremmo parlato","avreste parlato","avrebbero parlato"]},FR:{l:"FR Cond. Passé",r:["j'aurais parlé","tu aurais parlé","il aurait parlé","nous aurions parlé","vous auriez parlé","ils auraient parlé"]},ES:{l:"ES Cond. Compuesto",r:["habría hablado","habrías hablado","habría hablado","habríamos hablado","habríais hablado","habrían hablado"]},note:"All 3 for counterfactuals/regret. Parallel structure."},
+],
+};
+function revT(arr){return arr.map(t=>{const ks=Object.keys(t).filter(k=>k!=="name"&&k!=="note");const r={name:t.name,note:t.note};[...ks].reverse().forEach(k=>r[k]=t[k]);return r;});}
+CONJ["FR-IT"]=revT(CONJ["IT-FR"]);
+CONJ["ES-IT"]=revT(CONJ["IT-ES"]);
+CONJ["ES-FR"]=revT(CONJ["FR-ES"]);
+
+const MORPH={
+"IT-FR":[
+  {cat:"Noun",IT:"-zione",FR:"-tion",ex:[["comunicazione","communication"],["nazione","nation"],["stazione","station"],["situazione","situation"]]},
+  {cat:"Noun",IT:"-tà/-tude",FR:"-té/-tude",ex:[["libertà","liberté"],["qualità","qualité"],["certitudine","certitude"],["città","cité"]]},
+  {cat:"Adjective",IT:"-oso/-osa",FR:"-eux/-euse",ex:[["famoso","fameux"],["curioso","curieux"],["nervoso","nerveux"],["generoso","généreux"]]},
+  {cat:"Adverb",IT:"-mente",FR:"-ment",ex:[["facilmente","facilement"],["direttamente","directement"],["naturalmente","naturellement"],["semplicemente","simplement"]]},
+  {cat:"Verb",IT:"-izzare",FR:"-iser",ex:[["organizzare","organiser"],["realizzare","réaliser"],["modernizzare","moderniser"],["valorizzare","valoriser"]]},
+  {cat:"Prefix",IT:"ri-",FR:"re-",ex:[["ricominciare","recommencer"],["ritornare","retourner"],["rifare","refaire"],["riprendere","reprendre"]]},
+  {cat:"Prefix",IT:"in-/im-",FR:"in-/im-",ex:[["impossibile","impossible"],["inadeguato","inadéquat"],["informale","informel"],["incompleto","incomplet"]]},
+],
+"FR-IT":[
+  {cat:"Noun",FR:"-tion",IT:"-zione",ex:[["communication","comunicazione"],["nation","nazione"],["station","stazione"],["situation","situazione"]]},
+  {cat:"Noun",FR:"-té/-tude",IT:"-tà/-tude",ex:[["liberté","libertà"],["qualité","qualità"],["certitude","certitudine"],["cité","città"]]},
+  {cat:"Adjective",FR:"-eux/-euse",IT:"-oso/-osa",ex:[["fameux","famoso"],["curieux","curioso"],["nerveux","nervoso"],["généreux","generoso"]]},
+  {cat:"Adverb",FR:"-ment",IT:"-mente",ex:[["facilement","facilmente"],["directement","direttamente"],["naturellement","naturalmente"],["simplement","semplicemente"]]},
+  {cat:"Verb",FR:"-iser",IT:"-izzare",ex:[["organiser","organizzare"],["réaliser","realizzare"],["moderniser","modernizzare"],["valoriser","valorizzare"]]},
+  {cat:"Prefix",FR:"re-",IT:"ri-",ex:[["recommencer","ricominciare"],["retourner","ritornare"],["refaire","rifare"],["reprendre","riprendere"]]},
+],
+"IT-ES":[
+  {cat:"Noun",IT:"-zione",ES:"-ción",ex:[["comunicazione","comunicación"],["nazione","nación"],["stazione","estación"],["situazione","situación"]]},
+  {cat:"Noun",IT:"-tà",ES:"-dad",ex:[["libertà","libertad"],["qualità","calidad"],["città","ciudad"],["verità","verdad"]]},
+  {cat:"Adjective",IT:"-oso/-osa",ES:"-oso/-osa",ex:[["famoso","famoso"],["curioso","curioso"],["nervoso","nervioso"],["generoso","generoso"]]},
+  {cat:"Adverb",IT:"-mente",ES:"-mente",ex:[["facilmente","fácilmente"],["direttamente","directamente"],["naturalmente","naturalmente"],["semplicemente","simplemente"]]},
+  {cat:"Verb",IT:"-izzare",ES:"-izar",ex:[["organizzare","organizar"],["realizzare","realizar"],["modernizzare","modernizar"],["valorizzare","valorizar"]]},
+  {cat:"Noun",IT:"-mento",ES:"-miento",ex:[["movimento","movimiento"],["sentimento","sentimiento"],["argomento","argumento"],["documento","documento"]]},
+  {cat:"Prefix",IT:"ri-",ES:"re-",ex:[["ricominciare","recomenzar"],["ritornare","retornar"],["rifare","rehacer"],["riprendere","retomar"]]},
+],
+"ES-IT":[
+  {cat:"Noun",ES:"-ción",IT:"-zione",ex:[["comunicación","comunicazione"],["nación","nazione"],["estación","stazione"],["situación","situazione"]]},
+  {cat:"Noun",ES:"-dad",IT:"-tà",ex:[["libertad","libertà"],["calidad","qualità"],["ciudad","città"],["verdad","verità"]]},
+  {cat:"Adjective",ES:"-oso/-osa",IT:"-oso/-osa",ex:[["famoso","famoso"],["curioso","curioso"],["nervioso","nervoso"],["generoso","generoso"]]},
+  {cat:"Adverb",ES:"-mente",IT:"-mente",ex:[["fácilmente","facilmente"],["directamente","direttamente"],["naturalmente","naturalmente"],["simplemente","semplicemente"]]},
+  {cat:"Noun",ES:"-miento",IT:"-mento",ex:[["movimiento","movimento"],["sentimiento","sentimento"],["argumento","argomento"],["documento","documento"]]},
+],
+"FR-ES":[
+  {cat:"Noun",FR:"-tion",ES:"-ción",ex:[["communication","comunicación"],["nation","nación"],["station","estación"],["situation","situación"]]},
+  {cat:"Noun",FR:"-té",ES:"-dad",ex:[["liberté","libertad"],["qualité","calidad"],["cité","ciudad"],["vérité","verdad"]]},
+  {cat:"Adjective",FR:"-eux/-euse",ES:"-oso/-osa",ex:[["fameux","famoso"],["curieux","curioso"],["nerveux","nervioso"],["généreux","generoso"]]},
+  {cat:"Adverb",FR:"-ment",ES:"-mente",ex:[["facilement","fácilmente"],["directement","directamente"],["naturellement","naturalmente"],["simplement","simplemente"]]},
+  {cat:"Verb",FR:"-iser",ES:"-izar",ex:[["organiser","organizar"],["réaliser","realizar"],["moderniser","modernizar"],["valoriser","valorizar"]]},
+  {cat:"Prefix",FR:"re-",ES:"re-",ex:[["recommencer","recomenzar"],["retourner","retornar"],["refaire","rehacer"],["reprendre","retomar"]]},
+],
+"ES-FR":[
+  {cat:"Noun",ES:"-ción",FR:"-tion",ex:[["comunicación","communication"],["nación","nation"],["estación","station"],["situación","situation"]]},
+  {cat:"Noun",ES:"-dad",FR:"-té",ex:[["libertad","liberté"],["calidad","qualité"],["ciudad","cité"],["verdad","vérité"]]},
+  {cat:"Adjective",ES:"-oso/-osa",FR:"-eux/-euse",ex:[["famoso","fameux"],["curioso","curieux"],["nervioso","nerveux"],["generoso","généreux"]]},
+  {cat:"Adverb",ES:"-mente",FR:"-ment",ex:[["fácilmente","facilement"],["directamente","directement"],["naturalmente","naturellement"],["simplemente","simplement"]]},
+  {cat:"Verb",ES:"-izar",FR:"-iser",ex:[["organizar","organiser"],["realizar","réaliser"],["modernizar","moderniser"],["valorizar","valoriser"]]},
+],
+"ALL":[
+  {cat:"Adverb",IT:"-mente",FR:"-ment",ES:"-mente",ex:[["facilmente","facilement","fácilmente"],["naturalmente","naturellement","naturalmente"],["direttamente","directement","directamente"],["semplicemente","simplement","simplemente"]]},
+  {cat:"Noun (-tion)",IT:"-zione",FR:"-tion",ES:"-ción",ex:[["comunicazione","communication","comunicación"],["nazione","nation","nación"],["stazione","station","estación"],["situazione","situation","situación"]]},
+  {cat:"Verb (-ize)",IT:"-izzare",FR:"-iser",ES:"-izar",ex:[["organizzare","organiser","organizar"],["realizzare","réaliser","realizar"],["modernizzare","moderniser","modernizar"],["valorizzare","valoriser","valorizar"]]},
+  {cat:"Prefix re-",IT:"ri-",FR:"re-",ES:"re-",ex:[["ricominciare","recommencer","recomenzar"],["ritornare","retourner","retornar"],["rifare","refaire","rehacer"],["riprendere","reprendre","retomar"]]},
+  {cat:"Adj (-ous)",IT:"-oso",FR:"-eux",ES:"-oso",ex:[["famoso","fameux","famoso"],["curioso","curieux","curioso"],["nervoso","nerveux","nervioso"],["generoso","généreux","generoso"]]},
+  {cat:"Noun (-ty)",IT:"-tà",FR:"-té",ES:"-dad",ex:[["libertà","liberté","libertad"],["qualità","qualité","calidad"],["città","cité","ciudad"],["verità","vérité","verdad"]]},
+],
+};
+
+const GRAMMAR=[
+  {group:"From This Conversation",cards:[
+    {title:"pensavo che + which mood?",body:"After 'pensavo che', Italian uses the subjunctive — not the indicative. 'Pensare' introduces subjectivity which triggers the subjunctive. For unrealized hypotheticals, use the conditional perfect instead.",
+     examples:[{lang:"IT",text:"pensavo che fosse utile",trans:"I thought it was useful (belief)"},{lang:"IT",text:"pensavo che sarebbe stato utile",trans:"I thought it would have been useful (hypothetical/unrealized)"},{lang:"ES",text:"pensaba que fuera útil",trans:"ES also uses subjunctive after pensar in past"},{lang:"FR",text:"je pensais que ce serait utile",trans:"FR uses conditional here, not subjunctive"}],
+     note:"IT and ES align; FR diverges by using conditional after penser."},
+    {title:"era vs fosse vs sarebbe stato",body:"Three different moods express three different relationships to reality. The choice tells your listener whether you're stating a fact, expressing a belief, or imagining an unrealized possibility.",
+     examples:[{lang:"IT",text:"era utile",trans:"it was useful — plain stated fact (indicativo)"},{lang:"IT",text:"pensavo che fosse utile",trans:"I thought it was useful — subjective belief (congiuntivo)"},{lang:"IT",text:"sarebbe stato utile",trans:"it would have been useful — hypothetical, didn't happen (condizionale passato)"}],
+     note:"Rule: indicativo = reality / congiuntivo = opinion or doubt / condizionale = hypothetical"},
+    {title:"Conditional Perfect for regret & counterfactuals",body:"Use the conditional perfect for things that would have happened but didn't. Often paired with 'però invece / pero en cambio / mais au lieu de ça' to show the contrast with what actually happened.",
+     examples:[{lang:"IT",text:"pensavo che sarebbe stato utile andarci, però invece ha deciso di risparmiare",trans:"I thought it would have been useful to go, but instead he decided to save"},{lang:"ES",text:"pensaba que habría sido útil ir, pero en cambio decidió ahorrar",trans:"identical structure"},{lang:"FR",text:"je pensais que ça aurait été utile d'y aller, mais il a décidé d'économiser",trans:"same in French"}],
+     note:"The conditional perfect is the tense of regret and unrealized possibility across all three."},
+    {title:"The Passato Remoto — literary or everyday?",body:"The passato remoto is a simple past tense for completed, distant events. Its usage is highly regional in Italian but standard in writing. Compare with Spanish where the equivalent (pretérito indefinido) is active in everyday speech everywhere.",
+     examples:[{lang:"IT",text:"parlai / parlasti / parlò / parlammo / parlaste / parlarono",trans:"Passato remoto — literary in north IT, everyday in south"},{lang:"ES",text:"hablé / hablaste / habló / hablamos / hablasteis / hablaron",trans:"Pretérito indefinido — active everywhere in ES"},{lang:"FR",text:"je parlai / tu parlas / il parla (literary only)",trans:"Passé simple — completely extinct in spoken French"}],
+     note:"IT and ES endings are strikingly parallel. FR's equivalent is literary only."},
+    {title:"essere vs avoir/haber — choosing the auxiliary",body:"In Italian and French, some verbs use essere/être instead of avere/avoir to form compound past tenses. These are typically verbs of motion or change of state. Spanish uses haber for everything — no split.",
+     examples:[{lang:"IT",text:"sono andato / sono partito / sono arrivato",trans:"I went / I left / I arrived (essere not avere)"},{lang:"FR",text:"je suis allé / je suis parti / je suis arrivé",trans:"same verbs use être in French"},{lang:"ES",text:"fui / partí / llegué",trans:"ES uses simple past — no auxiliary split"}],
+     note:"IT and FR align on essere/être verbs. A key false friend when moving between IT/FR and ES."},
+    {title:"The dying subjunctive imperfect across the three languages",body:"All three languages have a subjunctive imperfect on paper, but its vitality in everyday speech varies dramatically. This is one of the most important practical differences.",
+     examples:[{lang:"IT",text:"volevo che parlasse — pensavo che fosse",trans:"Active, natural, everyday Italian — always use this"},{lang:"ES",text:"quería que hablara — pensaba que fuera",trans:"Active, natural, everyday Spanish"},{lang:"FR",text:"je voulais qu'il parlât (literary only)",trans:"Completely extinct in modern spoken French"}],
+     note:"This is one reason IT and ES feel grammatically closer to each other than either does to FR."},
+    {title:"Future hypotheticals — no future subjunctive",body:"Italian has no practical future subjunctive (it's identical to the present and thus extinct). For future hypotheticals after 'pensare che', use the present subjunctive and let context carry the future meaning.",
+     examples:[{lang:"IT",text:"penso che sia stanco dopo le vacanze",trans:"I think he'll be tired after the holidays (present subj. = future meaning)"},{lang:"IT",text:"penso che sarà stanco (accepted casually)",trans:"Future indicative — acceptable in speech, less formal"},{lang:"ES",text:"pienso que esté cansado / estará cansado",trans:"Same pattern in Spanish"}],
+     note:"Italian trusts context like 'dopo le vacanze' to signal futurity. Present subjunctive covers it."},
+  ]},
+  {group:"Core Cross-Language Patterns",cards:[
+    {title:"Negation: non / ne...pas / no",body:"All three place negation before the verb, but the structure differs significantly. IT and ES are simple; FR requires a double negative wrapper (ne...pas), though 'ne' is often dropped in spoken French.",
+     examples:[{lang:"IT",text:"non parlo",trans:"I don't speak"},{lang:"FR",text:"je ne parle pas (spoken: je parle pas)",trans:"double negative required; ne often dropped in speech"},{lang:"ES",text:"no hablo",trans:"simple 'no' before verb"}],
+     note:"IT/ES are structurally simpler for negation. FR's double negative is a common learner trip."},
+    {title:"Ser vs Estar — the big ES divergence",body:"Spanish splits 'to be' into ser (permanent identity) and estar (temporary state/condition). Italian and French use only one verb (essere/être) for both. Coming from IT/FR, this is the single biggest ES adjustment.",
+     examples:[{lang:"ES",text:"soy italiano (ser) / estoy cansado (estar)",trans:"permanent identity vs temporary state — two different verbs"},{lang:"IT",text:"sono italiano / sono stanco",trans:"essere covers both — no distinction needed"},{lang:"FR",text:"je suis italien / je suis fatigué",trans:"être covers both — same as Italian"}],
+     note:"IT and FR align; ES diverges. Knowing this pattern makes the adjustment conscious and faster."},
+    {title:"Reflexive verbs — a shared structure",body:"All three use reflexive pronouns but placement differs. All three attach them before conjugated verbs or append to infinitives. This is one of the most parallel structures across all three languages.",
+     examples:[{lang:"IT",text:"mi chiamo / voglio chiamarmi",trans:"I'm called / I want to be called"},{lang:"FR",text:"je m'appelle / je veux m'appeler",trans:"same structure"},{lang:"ES",text:"me llamo / quiero llamarme",trans:"most phonetically transparent of the three"}],
+     note:"Mastering reflexives in one language transfers almost directly to the other two."},
+    {title:"Noun gender — shared patterns & false friends",body:"All three assign grammatical gender. Many patterns are shared (especially -zione/-tion/-ción nouns are always feminine), but some gender assignments differ between languages and are common false friends.",
+     examples:[{lang:"IT",text:"il problema (m) — la mano (f, irregular)",trans:"problema is masculine despite -a ending"},{lang:"FR",text:"le problème (m) — la main (f)",trans:"same genders as Italian here"},{lang:"ES",text:"el problema (m) — la mano (f)",trans:"IT and ES align on these; both keep -a ending masculine"}],
+     note:"Nouns ending in -zione (IT) / -tion (FR) / -ción (ES) are always feminine — reliable across all three."},
+  ]},
+];
+
+function buildFCGroups(key){
+  const groups=[];
+  const conj=CONJ[key]||[];
+  const morph=MORPH[key]||[];
+  conj.forEach(t=>{
+    const ks=Object.keys(t).filter(k=>k!=="name"&&k!=="note");
+    const[la,lb]=ks;
+    groups.push({name:t.name,cards:t[la].r.map((row,i)=>({type:"conjugation",group:t.name,q:`${t[la].l}:\n${row}`,a:`${t[lb].l}:\n${t[lb].r[i]}`,note:t.note}))});
+  });
+  if(morph.length){
+    const ml=Object.keys(morph[0]).filter(k=>k!=="cat"&&k!=="ex");
+    const cards=[];
+    morph.forEach(m=>m.ex.forEach(ex=>cards.push({type:"morphology",group:"Morphology",q:`${ml[0]}: ${ex[0]}`,a:`${ml[1]}: ${ex[1]}`,note:`${m.cat}: ${ml[0]} ${m[ml[0]]} → ${ml[1]} ${m[ml[1]]}`})));
+    groups.push({name:"Morphology",cards});
+  }
+  const gc=[];
+  GRAMMAR.forEach(g=>g.cards.forEach(c=>gc.push({type:"grammar",group:"Grammar Insight",q:c.title,a:c.body,note:c.note||""})));
+  groups.push({name:"Grammar Insights",cards:gc});
+  return groups;
+}
+
+function rConj(){
+  const key=pk(),data=CONJ[key]||[],langs=pl();
+  return`<div class="sec-lbl">parlare / parler / hablar</div>`+data.map(t=>{
+    const tl=Object.keys(t).filter(k=>k!=="name"&&k!=="note");
+    const cc=tl.length===3?"c3":"c2";
+    return`<div class="tense-block"><div class="tense-name">${t.name}</div><div class="tgrid ${cc}">${tl.map(l=>{const d=t[l];if(!d)return"";const sb=SUBJ[l]||[];return`<div class="lcol" style="background:${COL[l]}"><div class="lhdr" style="background:${ACC[l]}">${d.l}</div>${d.r.map((r,i)=>`<div class="lrow"><span class="subj">${sb[i]||""}</span><span>${r}</span></div>`).join("")}</div>`;}).join("")}</div>${t.note?`<div class="tnote">💡 ${t.note}</div>`:""}</div>`;
+  }).join("");
+}
+
+function rMorph(){
+  const key=pk(),data=MORPH[key]||[],isAll=key==="ALL",langs=isAll?["IT","FR","ES"]:key.split("-"),cc=isAll?"c3":"c2";
+  return`<div class="sec-lbl">Suffix & Prefix Patterns</div>`+data.map(m=>{
+    const ml=Object.keys(m).filter(k=>k!=="cat"&&k!=="ex");
+    return`<div class="mblock"><div class="mhdr"><span class="mcat">${m.cat}</span>${ml.map(l=>`<span class="mbadge" style="background:${COL[l]};color:${ACC[l]}">${m[l]}</span>`).join("")}</div>${m.ex.map(ex=>`<div class="mrow ${cc}">${ex.map((w,k)=>`<span class="mword" style="color:${ACC[langs[k]]||"#ccc"}">${w}</span>`).join("")}</div>`).join("")}</div>`;
+  }).join("");
+}
+
+function rGrammar(){
+  return`<div class="sec-lbl">Grammar Concepts & Cross-Language Patterns</div>`+GRAMMAR.map(g=>`<div class="ggroup"><div class="gtitle">${g.group}</div>${g.cards.map(c=>`<div class="gcard"><div class="gcname">${c.title}</div><div class="gcbody">${c.body}</div><div class="gexs">${c.examples.map(e=>`<div class="gex"><div class="gexlang" style="color:${ACC[e.lang]||"#aaa"}">${LANG[e.lang]||e.lang}</div><div class="gextext">${e.text}</div><div class="gextrans">${e.trans}</div></div>`).join("")}</div>${c.note?`<div class="gnote">✦ ${c.note}</div>`:""}</div>`).join("")}</div>`).join("");
+}
+
+function rRef(){
+  const langs=pl();
+  const badges=langs.map(l=>`<div class="lang-badge" style="background:${COL[l]};color:${ACC[l]}">${LANG[l]}</div>`).join("");
+  const dirBtn=langs.length<3?`<span style="font-size:18px;color:var(--gold);cursor:pointer;" onclick="flipDir()">⇄</span>`:"";
+  let body=S.sec==="conjugation"?rConj():S.sec==="morphology"?rMorph():rGrammar();
+  return`<div class="lang-badges">${badges}${dirBtn}</div>${body}`;
+}
+
+function rFlash(){
+  const key=pk(),groups=buildFCGroups(key);
+  if(!groups.length)return"<p style='color:#888;padding:20px'>No cards.</p>";
+  if(S.fcg>=groups.length)S.fcg=0;
+  const g=groups[S.fcg];
+  if(S.fci>=g.cards.length)S.fci=0;
+  const c=g.cards[S.fci];
+  const pills=groups.map((gr,i)=>`<button class="fcgpill${i===S.fcg?" active":""}" onclick="setFCG(${i})">${gr.name}</button>`).join("");
+  return`<div id="fcwrap"><div id="fcgroups">${pills}</div><div id="fccounter">${S.fci+1} / ${g.cards.length}</div><div id="fccard${S.fcr?" on":""}" onclick="revealCard()"><div id="fctype">${c.group}</div><div id="fcq">${c.q}</div><div id="fca">${c.a}</div><div id="fchint">tap to reveal</div><div id="fcnote">${c.note||""}</div></div><div id="fcbtns"><button class="fcbtn" id="fcprev" onclick="prevCard()">← Prev</button><button class="fcbtn" id="fcnext" onclick="nextCard()">Next →</button></div></div>`;
+}
+
+function render(){
+  document.getElementById("pair-tabs").innerHTML=PAIRS.map((p,i)=>{
+    const lbl=p.id==="ALL"?"All 3":`${p.a} · ${p.b}`;
+    return`<button class="pair-tab${i===S.pair?" active":""}" onclick="setPair(${i})">${lbl}</button>`;
+  }).join("");
+
+  const p=PAIRS[S.pair],[a,b]=pl();
+  const dt=document.getElementById("dir-toggle"),dl=document.getElementById("dir-label"),di=document.getElementById("dir-icon");
+  if(p.id==="ALL"){dl.textContent="IT · FR · ES";dt.style.opacity="0.3";dt.style.pointerEvents="none";}
+  else{dl.textContent=`${a} → ${b}`;dt.style.opacity="1";dt.style.pointerEvents="auto";di.className=S.flip?"flipped":"";}
+
+  ["reference","flashcard"].forEach(m=>document.getElementById(`mp-${m}`).classList.toggle("active",S.mode===m));
+
+  const sb=document.getElementById("secbar");
+  if(S.mode==="reference"){
+    sb.style.display="flex";
+    sb.innerHTML=[{id:"conjugation",lbl:"🔀 Verb Tenses"},{id:"morphology",lbl:"🧩 Morphology"},{id:"grammar",lbl:"✦ Grammar"}].map(s=>`<button class="sec-pill${S.sec===s.id?" active":""}" onclick="setSec('${s.id}')">${s.lbl}</button>`).join("");
+  }else{sb.style.display="none";}
+
+  const sc=document.getElementById("scroll");
+  sc.innerHTML=S.mode==="reference"?rRef():rFlash();
+  sc.scrollTop=0;
+}
+
+function setPair(i){S.pair=i;S.flip=false;S.fcg=0;S.fci=0;S.fcr=false;render();}
+function flipDir(){if(PAIRS[S.pair].id!=="ALL"){S.flip=!S.flip;S.fci=0;S.fcr=false;render();}}
+function setMode(m){S.mode=m;S.fcr=false;render();}
+function setSec(s){S.sec=s;render();}
+function setFCG(i){S.fcg=i;S.fci=0;S.fcr=false;render();}
+function revealCard(){if(!S.fcr){S.fcr=true;render();}}
+function nextCard(){const g=buildFCGroups(pk())[S.fcg];S.fci=(S.fci+1)%g.cards.length;S.fcr=false;render();}
+function prevCard(){const g=buildFCGroups(pk())[S.fcg];S.fci=(S.fci-1+g.cards.length)%g.cards.length;S.fcr=false;render();}
+
+render();
+</script>
+</body>
+</html>
