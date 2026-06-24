@@ -673,7 +673,7 @@ function rVocabRef(){
 function rRef(){
   const langs=pl();
   const badges=langs.map(l=>`<div class="lbadge" style="background:${COL[l]};color:${ACC[l]}">${LANG[l]}</div>`).join("");
-  const body=S.sec==="conj"?rConj():S.sec==="morph"?rMorph():S.sec==="grammar"?rGrammar():rVocabRef();
+  const body=S.sec==="conj"?rConj():S.sec==="morph"?rMorph():S.sec==="grammar"?rGrammar():S.sec==="prep"?rPrep():rVocabRef();
   return`<div class="lbadges">${badges}${langs.length<3?`<span style="font-size:16px;color:var(--gold);cursor:pointer;align-self:center" onclick="flipDir()">⇄</span>`:""}</div>${body}`;
 }
 
@@ -714,6 +714,174 @@ function rFlash(){
   </div>`;
 }
 
+// ── PREPOSITION DATA ─────────────────────────────────────────────────────────
+const PREP=[
+  {
+    group:"📍 Location — being somewhere",
+    note:"IT uses 'a' for cities, 'in' for countries/regions. FR uses 'à' for cities, 'en' for feminine countries, 'au' for masculine. ES 'en' covers both.",
+    rows:[
+      {use:"in a city",IT:"a Roma",FR:"à Paris",ES:"en Madrid"},
+      {use:"in a country (fem.)",IT:"in Italia",FR:"en France",ES:"en España"},
+      {use:"in a country (masc.)",IT:"in Brasile",FR:"au Brésil",ES:"en Brasil"},
+      {use:"in a room/space",IT:"in cucina / nella stanza",FR:"dans la cuisine / dans la pièce",ES:"en la cocina / en la habitación"},
+      {use:"on a surface",IT:"sul tavolo / sulla sedia",FR:"sur la table / sur la chaise",ES:"sobre la mesa / en la silla"},
+      {use:"at a place (general)",IT:"al bar / all'ufficio",FR:"au café / au bureau",ES:"en el bar / en la oficina"},
+      {use:"at someone's place",IT:"da Marco / da me",FR:"chez Marco / chez moi",ES:"en casa de Marco / en mi casa"},
+    ]
+  },
+  {
+    group:"🚀 Movement — going somewhere",
+    note:"IT/ES use 'a' for cities, 'in' for countries. FR mirrors this. 'Chez' (FR) has no single equivalent in IT/ES.",
+    rows:[
+      {use:"to a city",IT:"vado a Roma",FR:"je vais à Paris",ES:"voy a Madrid"},
+      {use:"to a country (fem.)",IT:"vado in Italia",FR:"je vais en France",ES:"voy a España"},
+      {use:"to a country (masc.)",IT:"vado in Brasile",FR:"je vais au Brésil",ES:"voy a Brasil"},
+      {use:"to someone's place",IT:"vado da Marco",FR:"je vais chez Marco",ES:"voy a casa de Marco"},
+      {use:"into a room",IT:"entro nella stanza",FR:"j'entre dans la pièce",ES:"entro en la habitación"},
+      {use:"onto / up to",IT:"salgo sul treno",FR:"je monte dans le train",ES:"subo al tren"},
+    ]
+  },
+  {
+    group:"🌱 Origin — coming from",
+    note:"IT 'da' = from. FR 'de/depuis'. ES 'de/desde'. 'Since' (time) = IT da, FR depuis, ES desde — a key parallel.",
+    rows:[
+      {use:"from a city",IT:"vengo da Roma",FR:"je viens de Paris",ES:"vengo de Madrid"},
+      {use:"from a country",IT:"vengo dall'Italia",FR:"je viens de France",ES:"vengo de España"},
+      {use:"from someone's place",IT:"vengo da Marco",FR:"je viens de chez Marco",ES:"vengo de casa de Marco"},
+      {use:"since (time)",IT:"aspetto da un'ora",FR:"j'attends depuis une heure",ES:"espero desde hace una hora"},
+      {use:"since (a date)",IT:"vivo qui da marzo",FR:"j'habite ici depuis mars",ES:"vivo aquí desde marzo"},
+    ]
+  },
+  {
+    group:"🎯 Purpose & Destination — for / in order to",
+    note:"The big IT split: 'per' = purpose/duration, 'da' = function/type. FR splits 'pour' vs 'par'. ES splits 'para' vs 'por'.",
+    rows:[
+      {use:"in order to (purpose)",IT:"studio per imparare",FR:"j'étudie pour apprendre",ES:"estudio para aprender"},
+      {use:"intended for a person",IT:"un regalo per te",FR:"un cadeau pour toi",ES:"un regalo para ti"},
+      {use:"for a duration (future)",IT:"parto per tre giorni",FR:"je pars pour trois jours",ES:"me voy por / para tres días"},
+      {use:"by means of / by (agent)",IT:"fatto da un artista",FR:"fait par un artiste",ES:"hecho por un artista"},
+      {use:"because of / due to",IT:"chiuso per lavori",FR:"fermé pour travaux / en raison de",ES:"cerrado por obras"},
+      {use:"in exchange for",IT:"l'ho comprato per 10 euro",FR:"je l'ai acheté pour 10 euros",ES:"lo compré por 10 euros"},
+      {use:"on behalf of",IT:"parlo per tutti",FR:"je parle pour tout le monde",ES:"hablo por todos / en nombre de todos"},
+    ]
+  },
+  {
+    group:"⏱ Duration — for how long",
+    note:"IT 'per' for future duration, 'da' for ongoing ('I have been doing X for Y time'). FR: 'pendant' (completed), 'depuis' (ongoing), 'pour' (planned). ES: 'por' (general), 'durante' (completed), 'desde hace' (ongoing).",
+    rows:[
+      {use:"ongoing (I've been X for Y)",IT:"studio italiano da tre anni",FR:"j'étudie l'italien depuis trois ans",ES:"estudio italiano desde hace tres años"},
+      {use:"completed duration",IT:"ho studiato per tre ore",FR:"j'ai étudié pendant trois heures",ES:"estudié durante tres horas"},
+      {use:"planned / future duration",IT:"resto per una settimana",FR:"je reste pour une semaine",ES:"me quedo por / durante una semana"},
+    ]
+  },
+  {
+    group:"🔧 Function & Type — what something is for",
+    note:"IT uses 'da' (not 'per') when the preposition describes what something IS, not what it's FOR. FR uses 'à'. ES uses 'de' or 'para'.",
+    rows:[
+      {use:"type of object (its function)",IT:"macchina da caffè",FR:"machine à café",ES:"máquina de café"},
+      {use:"glass for wine",IT:"bicchiere da vino",FR:"verre à vin",ES:"copa de vino / copa para vino"},
+      {use:"table for dining",IT:"tavolo da pranzo",FR:"table à manger / table de salle à manger",ES:"mesa de comedor"},
+      {use:"something to do (task)",IT:"c'è da fare",FR:"il y a à faire",ES:"hay que hacer"},
+      {use:"worth doing",IT:"vale la pena farlo",FR:"ça vaut la peine de le faire",es:"vale la pena hacerlo"},
+    ]
+  },
+  {
+    group:"🔗 Possession & Relationship — of / belonging to",
+    note:"IT 'di' = of/about. FR 'de'. ES 'de'. All three contract with articles: IT del/della/dei, FR du/de la/des, ES del/de la/de los.",
+    rows:[
+      {use:"of / belonging to",IT:"il libro di Marco",FR:"le livre de Marco",ES:"el libro de Marco"},
+      {use:"contracted (masc. sing.)",IT:"il libro del professore",FR:"le livre du professeur",ES:"el libro del profesor"},
+      {use:"contracted (fem. sing.)",IT:"la borsa della ragazza",FR:"le sac de la fille",ES:"la bolsa de la chica"},
+      {use:"contracted (plural)",IT:"i libri dei bambini",FR:"les livres des enfants",ES:"los libros de los niños"},
+      {use:"about / on (topic)",IT:"un libro di arte",FR:"un livre sur l'art / d'art",ES:"un libro de arte / sobre el arte"},
+      {use:"some / partitive",IT:"voglio del vino",FR:"je veux du vin",ES:"quiero vino (no partitive in ES)"},
+    ]
+  },
+  {
+    group:"↔️ Direct & Indirect Objects — the core sentence",
+    note:"Direct object = WHAT is acted on (no preposition in IT/FR/ES). Indirect object = TO WHOM / FOR WHOM — IT uses 'a', FR uses 'à', ES uses 'a' (+ personal 'a' for people).",
+    rows:[
+      {use:"DO only (I read the book)",IT:"leggo il libro",FR:"je lis le livre",ES:"leo el libro"},
+      {use:"IO only (I read to you)",IT:"leggo a te / ti leggo",FR:"je lis à toi / je te lis",ES:"leo a ti / te leo"},
+      {use:"DO + IO (I read it to you)",IT:"te lo leggo",FR:"je te le lis",ES:"te lo leo"},
+      {use:"I give the book to Maria",IT:"do il libro a Maria",FR:"je donne le livre à Maria",ES:"le doy el libro a María"},
+      {use:"I give it to her",IT:"glielo do",FR:"je le lui donne",ES:"se lo doy"},
+      {use:"I send it to them",IT:"glielo mando",FR:"je le leur envoie",ES:"se lo mando"},
+      {use:"She told me (about it)",IT:"me lo ha detto",FR:"elle me l'a dit",ES:"me lo dijo"},
+      {use:"He explained it to us",IT:"ce lo ha spiegato",FR:"il nous l'a expliqué",ES:"nos lo explicó"},
+    ]
+  },
+  {
+    group:"🔄 Object Pronouns — the full table",
+    note:"Pronouns replace nouns. Direct object pronouns answer 'what/whom'. Indirect answer 'to whom'. When combined, IO comes first in IT/ES, but order can vary in FR.",
+    rows:[
+      {use:"me (direct)",IT:"mi vede",FR:"il me voit",ES:"me ve"},
+      {use:"me (indirect — to me)",IT:"mi parla / parla a me",FR:"il me parle",ES:"me habla"},
+      {use:"you (direct, inform.)",IT:"ti vedo",FR:"je te vois",ES:"te veo"},
+      {use:"you (indirect — to you)",IT:"ti scrivo",FR:"je t'écris",ES:"te escribo"},
+      {use:"him/it (direct)",IT:"lo vedo",FR:"je le vois",ES:"lo veo"},
+      {use:"her/it (direct)",IT:"la vedo",FR:"je la vois",ES:"la veo"},
+      {use:"to him / to her",IT:"gli / le parlo",FR:"je lui parle",ES:"le hablo"},
+      {use:"us (direct)",IT:"ci vedono",FR:"ils nous voient",ES:"nos ven"},
+      {use:"to us (indirect)",IT:"ci scrivono",FR:"ils nous écrivent",ES:"nos escriben"},
+      {use:"them (direct, masc.)",IT:"li vedo",FR:"je les vois",ES:"los veo"},
+      {use:"to them (indirect)",IT:"gli parlo / parlo loro",FR:"je leur parle",ES:"les hablo"},
+    ]
+  },
+  {
+    group:"⚡ Combined Pronouns — DO + IO together",
+    note:"When DO and IO pronouns combine: IT/ES put IO first, then DO. FR puts IO first too but pronouns fuse differently. The IO 'gli/le' → 'glie-' in IT before combining. ES 'le/les' → 'se' before lo/la/los/las.",
+    rows:[
+      {use:"it to me",IT:"me lo (dà)",FR:"me le (donne)",ES:"me lo (da)"},
+      {use:"it to you",IT:"te lo (dà)",FR:"te le (donne)",ES:"te lo (da)"},
+      {use:"it to him/her",IT:"glielo (dà)",FR:"le lui (donne)",ES:"se lo (da)"},
+      {use:"it to us",IT:"ce lo (dà)",FR:"nous le (donne)",ES:"nos lo (da)"},
+      {use:"it to them",IT:"glielo (dà)",FR:"le leur (donne)",ES:"se lo (da)"},
+      {use:"them to me (plural DO)",IT:"me li (dà)",FR:"me les (donne)",ES:"me los (da)"},
+      {use:"her to him (fem. DO)",IT:"gliela (dà)",FR:"la lui (donne)",ES:"se la (da)"},
+    ]
+  },
+  {
+    group:"🏗 Contracted Prepositions — the combos",
+    note:"IT prepositions contract with definite articles (di+il=del, a+la=alla etc). FR contracts de+le=du, de+les=des, à+le=au, à+les=aux. ES only del and al.",
+    rows:[
+      {use:"of the (masc. sing.)",IT:"del ragazzo",FR:"du garçon",ES:"del chico"},
+      {use:"of the (fem. sing.)",IT:"della ragazza",FR:"de la fille",ES:"de la chica"},
+      {use:"of the (masc. pl.)",IT:"dei ragazzi",FR:"des garçons",ES:"de los chicos"},
+      {use:"to the (masc. sing.)",IT:"al mercato",FR:"au marché",ES:"al mercado"},
+      {use:"to the (fem. sing.)",IT:"alla stazione",FR:"à la gare",ES:"a la estación"},
+      {use:"to the (pl.)",IT:"agli amici / alle amiche",FR:"aux amis / aux amies",ES:"a los amigos / a las amigas"},
+      {use:"in the (masc. sing.)",IT:"nel parco",FR:"dans le parc",ES:"en el parque"},
+      {use:"in the (fem. sing.)",IT:"nella borsa",FR:"dans le sac",ES:"en la bolsa"},
+      {use:"on the (masc.)",IT:"sul tavolo",FR:"sur la table",ES:"sobre / en la mesa"},
+      {use:"from the (masc.)",IT:"dal medico",FR:"du médecin / chez le médecin",ES:"del médico"},
+    ]
+  },
+];
+
+function rPrep(){
+  return`<div class="slbl">Prepositions & Object Pronouns — across IT · FR · ES</div>`+PREP.map(g=>{
+    return`<div class="ggroup">
+      <div class="ggttl">${g.group}</div>
+      ${g.note?`<div class="gcard" style="margin-bottom:10px"><div class="gcbody" style="margin-bottom:0">${g.note}</div></div>`:""}
+      <div class="vtable">
+        <div class="vrow hdr" style="grid-template-columns:1.4fr 1fr 1fr 1fr">
+          <span class="vhdr" style="color:#777">USE</span>
+          <span class="vhdr vit">IT</span>
+          <span class="vhdr vfr">FR</span>
+          <span class="vhdr ves">ES</span>
+        </div>
+        ${g.rows.map(r=>`<div class="vrow" style="grid-template-columns:1.4fr 1fr 1fr 1fr">
+          <span class="vword" style="color:#666;font-size:11px;font-style:italic">${r.use}</span>
+          <span class="vword vit">${r.IT}</span>
+          <span class="vword vfr">${r.FR}</span>
+          <span class="vword ves">${r.ES||r.es||""}</span>
+        </div>`).join("")}
+      </div>
+    </div>`;
+  }).join("");
+}
+
 // ── MAIN RENDER ──────────────────────────────────────────────────────────────
 function render(){
   // Pair tabs
@@ -740,6 +908,7 @@ function render(){
       {id:"conj",lbl:"🔀 Conjugation"},
       {id:"morph",lbl:"🧩 Morphology"},
       {id:"grammar",lbl:"✦ Grammar"},
+      {id:"prep",lbl:"🔗 Prepositions"},
     ].map(s=>`<button class="spill${S.sec===s.id?" on":""}" onclick="setSec('${s.id}')">${s.lbl}</button>`).join("");
   }else{sb.style.display="none";}
 
